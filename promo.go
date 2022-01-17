@@ -3,6 +3,7 @@ package cashbag
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -87,8 +88,21 @@ func NewPromo(promo Promo) Promo {
 func (p *Promo) Calculate(shoppingCart ShoppingCart) (rewards []Reward, grandTotal float32, amountOfDeduction float32, err error) {
 	for _, schema := range p.Schemas {
 		switch schema.ConditionType {
+		case CONDITION_TYPE_RANGE_PRICE:
+			valid, amountWillDeduct, err := checkConditionPriceRange(shoppingCart, schema)
+			if err != nil {
+				return []Reward{}, 0, 0, err
+			}
+			if valid {
+				rewardAmount, reward, err := getReward(amountWillDeduct, schema)
+				if err != nil {
+					return []Reward{}, 0, 0, err
+				}
+				rewards = append(rewards, reward)
+				amountOfDeduction += rewardAmount
+			}
 		case CONDITION_TYPE_MIN_PRICE:
-			valid, amountWillDeduct, err := checkConditionMinRange(shoppingCart, schema)
+			valid, amountWillDeduct, err := checkConditionMinPrice(shoppingCart, schema)
 			if err != nil {
 				return []Reward{}, 0, 0, err
 			}
@@ -107,7 +121,7 @@ func (p *Promo) Calculate(shoppingCart ShoppingCart) (rewards []Reward, grandTot
 	return
 }
 
-func checkConditionMinRange(shoppingCart ShoppingCart, schema Schema) (valid bool, amountWillDeduct float32, err error) {
+func checkConditionMinPrice(shoppingCart ShoppingCart, schema Schema) (valid bool, amountWillDeduct float32, err error) {
 	switch schema.AmountType {
 	case AMOUNT_TYPE_SUBTOTAL:
 		limit, err := strconv.ParseFloat(schema.ConditionValue, 32)
@@ -122,24 +136,29 @@ func checkConditionMinRange(shoppingCart ShoppingCart, schema Schema) (valid boo
 		amountWillDeduct = shoppingCart.Subtotal
 		break
 	}
-	// case AMOUNT_TYPE_SUBTOTAL:
-	// 	log.Println("MASUK")
-	// 	rangePrice := strings.Split(schema.ConditionValue, "|")
-	// 	lowRange, err := strconv.ParseFloat(rangePrice[0], 32)
-	// 	if err != nil {
-	// 		return false, 0, err
-	// 	}
-	// 	highRange, err := strconv.ParseFloat(rangePrice[1], 32)
-	// 	if err != nil {
-	// 		return false, 0, err
-	// 	}
-	// 	if float32(lowRange) > shoppingCart.Subtotal && shoppingCart.Subtotal > float32(highRange) {
-	// 		return false, 0, nil
-	// 	}
-	// 	valid = false
-	// 	amountWillDeduct = shoppingCart.GrandTotal
-	// 	break
-	// }
+	return
+}
+
+func checkConditionPriceRange(shoppingCart ShoppingCart, schema Schema) (valid bool, amountWillDeduct float32, err error) {
+	switch schema.AmountType {
+	case AMOUNT_TYPE_SUBTOTAL:
+		priceWillCompare := shoppingCart.Subtotal
+		rangePrice := strings.Split(schema.ConditionValue, "|")
+		lowRange, err := strconv.ParseFloat(rangePrice[0], 32)
+		if err != nil {
+			return false, 0, err
+		}
+		highRange, err := strconv.ParseFloat(rangePrice[1], 32)
+		if err != nil {
+			return false, 0, err
+		}
+		if float32(lowRange) > priceWillCompare && priceWillCompare > float32(highRange) {
+			return false, 0, nil
+		}
+		valid = true
+		amountWillDeduct = shoppingCart.GrandTotal
+		break
+	}
 	return
 }
 
