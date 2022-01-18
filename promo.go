@@ -54,8 +54,9 @@ type ShoppingCart struct {
 }
 
 type Cart struct {
-	Price float32
-	Qty   int
+	Price        float32
+	Qty          int
+	AdditionalID string
 }
 
 type Reward struct {
@@ -80,6 +81,8 @@ type PromoRewarded struct {
 	Reward            []Reward
 	TotalAmountReward float32
 }
+
+type CallbackFunction func() (err error)
 
 func NewPromo(promo Promo) Promo {
 	return promo
@@ -117,6 +120,43 @@ func (p *Promo) Calculate(shoppingCart ShoppingCart) (rewards []Reward, grandTot
 			break
 		}
 	}
+	grandTotal = shoppingCart.GrandTotal - amountOfDeduction
+	return
+}
+
+func (p *Promo) CalculateWithCallback(shoppingCart ShoppingCart, callback CallbackFunction) (rewards []Reward, grandTotal float32, amountOfDeduction float32, err error) {
+	for _, schema := range p.Schemas {
+		switch schema.ConditionType {
+		case CONDITION_TYPE_RANGE_PRICE:
+			valid, amountWillDeduct, err := checkConditionPriceRange(shoppingCart, schema)
+			if err != nil {
+				return []Reward{}, 0, 0, err
+			}
+			if valid {
+				rewardAmount, reward, err := getReward(amountWillDeduct, schema)
+				if err != nil {
+					return []Reward{}, 0, 0, err
+				}
+				rewards = append(rewards, reward)
+				amountOfDeduction += rewardAmount
+			}
+		case CONDITION_TYPE_MIN_PRICE:
+			valid, amountWillDeduct, err := checkConditionMinPrice(shoppingCart, schema)
+			if err != nil {
+				return []Reward{}, 0, 0, err
+			}
+			if valid {
+				rewardAmount, reward, err := getReward(amountWillDeduct, schema)
+				if err != nil {
+					return []Reward{}, 0, 0, err
+				}
+				rewards = append(rewards, reward)
+				amountOfDeduction += rewardAmount
+			}
+			break
+		}
+	}
+	err = callback()
 	grandTotal = shoppingCart.GrandTotal - amountOfDeduction
 	return
 }
