@@ -1,4 +1,4 @@
-module hualoqueros/cashbag
+module github.com/hualoqueros/cashbag
 
 go 1.16
 
