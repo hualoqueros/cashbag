@@ -4,7 +4,7 @@ This is golang sdk for implement promotion schema
 ```go
 package main
 
-import "https://github.com/hualoqueros/cashbag"
+import "github.com/hualoqueros/cashbag"
 
 func main() {
     promotion := Promo{
