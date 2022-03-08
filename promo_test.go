@@ -57,6 +57,13 @@ func TestPromoTypeDiscountConditionPriceRangeWithSubTotalShouldSuccess(t *testin
 				RewardType:     REWARD_TYPE_DISCOUNT_AMOUNT,
 				RewardValue:    "2500",
 			},
+			Schema{
+				AmountType:     AMOUNT_TYPE_SUBTOTAL,
+				ConditionType:  CONDITION_TYPE_RANGE_PRICE,
+				ConditionValue: "100001|200000",
+				RewardType:     REWARD_TYPE_DISCOUNT_AMOUNT,
+				RewardValue:    "3500",
+			},
 		},
 		AdditionalInfo: "123",
 	}
@@ -72,16 +79,17 @@ func TestPromoTypeDiscountConditionPriceRangeWithSubTotalShouldSuccess(t *testin
 				Qty:   1,
 			},
 		},
-		Subtotal:   60000,
-		GrandTotal: 60000,
+		Subtotal:   160000,
+		GrandTotal: 160000,
 	}
 	getPromo := NewPromo(promotion)
 	rewards, newGrandTotal, totalDeduction, err := getPromo.Calculate(shoppingCart)
 	assert.Nil(t, err)
 	assert.NotNil(t, rewards)
+	assert.Equal(t, "3500", rewards[0].RewardValue)
 	assert.NotNil(t, totalDeduction)
 	assert.Less(t, newGrandTotal, shoppingCart.GrandTotal)
-	assert.Equal(t, totalDeduction, float32(2500))
+	assert.Equal(t, totalDeduction, float32(3500))
 }
 
 func TestPromoTypeDiscountConditionPriceRangeWithSubTotalShouldFailed(t *testing.T) {
@@ -116,12 +124,9 @@ func TestPromoTypeDiscountConditionPriceRangeWithSubTotalShouldFailed(t *testing
 		GrandTotal: 510000,
 	}
 	getPromo := NewPromo(promotion)
-	rewards, newGrandTotal, totalDeduction, err := getPromo.Calculate(shoppingCart)
+	rewards, _, _, err := getPromo.Calculate(shoppingCart)
 	assert.Nil(t, err)
-	assert.NotNil(t, rewards)
-	assert.NotNil(t, totalDeduction)
-	assert.Less(t, newGrandTotal, shoppingCart.GrandTotal)
-	assert.NotEqual(t, totalDeduction, float32(100000))
+	assert.Empty(t, rewards)
 }
 
 func TestPromoTypeProductShouldSuccess(t *testing.T) {

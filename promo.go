@@ -103,6 +103,8 @@ func (p *Promo) Calculate(shoppingCart ShoppingCart) (rewards []Reward, grandTot
 				}
 				rewards = append(rewards, reward)
 				amountOfDeduction += rewardAmount
+				grandTotal = shoppingCart.GrandTotal - amountOfDeduction
+				return rewards, grandTotal, amountOfDeduction, err
 			}
 		case CONDITION_TYPE_MIN_PRICE:
 			valid, amountWillDeduct, err := checkConditionMinPrice(shoppingCart, schema)
@@ -116,12 +118,15 @@ func (p *Promo) Calculate(shoppingCart ShoppingCart) (rewards []Reward, grandTot
 				}
 				rewards = append(rewards, reward)
 				amountOfDeduction += rewardAmount
+				grandTotal = shoppingCart.GrandTotal - amountOfDeduction
+				return rewards, grandTotal, amountOfDeduction, err
 			}
 			break
 		}
 	}
-	grandTotal = shoppingCart.GrandTotal - amountOfDeduction
+
 	return
+
 }
 
 func (p *Promo) CalculateWithCallback(shoppingCart ShoppingCart, callback CallbackFunction) (rewards []Reward, grandTotal float32, amountOfDeduction float32, err error) {
@@ -168,7 +173,6 @@ func checkConditionMinPrice(shoppingCart ShoppingCart, schema Schema) (valid boo
 		if err != nil {
 			return false, 0, err
 		}
-
 		if shoppingCart.Subtotal < float32(limit) {
 			return false, 0, nil
 		}
@@ -192,7 +196,11 @@ func checkConditionPriceRange(shoppingCart ShoppingCart, schema Schema) (valid b
 		if err != nil {
 			return false, 0, err
 		}
-		if float32(lowRange) > priceWillCompare && priceWillCompare > float32(highRange) {
+
+		if float32(lowRange) > priceWillCompare {
+			return false, 0, nil
+		}
+		if priceWillCompare > float32(highRange) {
 			return false, 0, nil
 		}
 		valid = true
