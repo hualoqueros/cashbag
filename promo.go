@@ -132,6 +132,10 @@ func (p *Promo) Calculate(shoppingCart ShoppingCart) (rewards []Reward, grandTot
 }
 
 func (p *Promo) CalculateWithCallback(shoppingCart ShoppingCart, callback CallbackFunction) (rewards []Reward, grandTotal float32, amountOfDeduction float32, err error) {
+	err = callback()
+	if err != nil {
+		return
+	}
 	for _, schema := range p.Schemas {
 		switch schema.ConditionType {
 		case CONDITION_TYPE_RANGE_PRICE:
@@ -167,7 +171,6 @@ func (p *Promo) CalculateWithCallback(shoppingCart ShoppingCart, callback Callba
 			break
 		}
 	}
-	err = callback()
 	grandTotal = shoppingCart.GrandTotal - amountOfDeduction
 	if err == nil {
 		object := p.Schemas[0].AmountType
