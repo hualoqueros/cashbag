@@ -2,6 +2,8 @@ package cashbag
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -144,6 +146,8 @@ func (p *Promo) CalculateWithCallback(shoppingCart ShoppingCart, callback Callba
 				}
 				rewards = append(rewards, reward)
 				amountOfDeduction += rewardAmount
+				grandTotal = shoppingCart.GrandTotal - amountOfDeduction
+				return rewards, grandTotal, amountOfDeduction, err
 			}
 		case CONDITION_TYPE_MIN_PRICE:
 			valid, amountWillDeduct, err := checkConditionMinPrice(shoppingCart, schema)
@@ -157,12 +161,32 @@ func (p *Promo) CalculateWithCallback(shoppingCart ShoppingCart, callback Callba
 				}
 				rewards = append(rewards, reward)
 				amountOfDeduction += rewardAmount
+				grandTotal = shoppingCart.GrandTotal - amountOfDeduction
+				return rewards, grandTotal, amountOfDeduction, err
 			}
 			break
 		}
 	}
 	err = callback()
 	grandTotal = shoppingCart.GrandTotal - amountOfDeduction
+	if err == nil {
+		object := p.Schemas[0].AmountType
+		condition := p.Schemas[0].ConditionType
+		desc := ""
+		priceWording := ""
+		if condition == CONDITION_TYPE_RANGE_PRICE {
+			desc = strings.ReplaceAll(p.Schemas[0].ConditionValue, "|", " - ")
+			desc = fmt.Sprintf("%s", desc)
+			priceWording = "Range Price is"
+		}
+		if condition == CONDITION_TYPE_MIN_PRICE {
+			desc = strings.ReplaceAll(p.Schemas[0].ConditionValue, "|", " - ")
+			desc = fmt.Sprintf("%s", desc)
+			priceWording = "Minimum Price is"
+		}
+
+		err = errors.New(strings.ToLower(fmt.Sprintf("%s %s %s", object, priceWording, desc)))
+	}
 	return
 }
 

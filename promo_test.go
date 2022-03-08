@@ -207,9 +207,9 @@ func TestPromoTypeDiscountConditionMinPriceWithSubTotalShouldErrorWithCallback(t
 			Schema{
 				AmountType:     AMOUNT_TYPE_SUBTOTAL,
 				ConditionType:  CONDITION_TYPE_MIN_PRICE,
-				ConditionValue: "5000",
+				ConditionValue: "11000",
 				RewardType:     REWARD_TYPE_DISCOUNT_AMOUNT,
-				RewardValue:    "2500",
+				RewardValue:    "3500",
 			},
 		},
 		AdditionalInfo: "123",
@@ -223,13 +223,13 @@ func TestPromoTypeDiscountConditionMinPriceWithSubTotalShouldErrorWithCallback(t
 				Qty:          1,
 			},
 		},
-		Subtotal:   500000,
-		GrandTotal: 500000,
+		Subtotal:   4000,
+		GrandTotal: 5000,
 	}
 	getPromo := NewPromo(promotion)
 	checkingSKUAvailibilty := func() (err error) {
 		for _, cart := range shoppingCart.Carts {
-			skuIsNotAvailable := false
+			skuIsNotAvailable := true
 			if !skuIsNotAvailable {
 				return errors.New(fmt.Sprintf("SKU %+s not available", cart.AdditionalID))
 			}
