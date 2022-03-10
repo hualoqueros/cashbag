@@ -244,7 +244,7 @@ func TestPromoTypeDiscountConditionMinPriceWithSubTotalShouldErrorWithCallback(t
 
 func TestPromoTypeDiscountConditionMinPriceWithSubTotalShouldErrorBecauseExpiredWithCallback(t *testing.T) {
 	now := time.Now()
-	expiredDate := now.Add(-48 * time.Hour)
+	expiredDate := now.Add(-24 * time.Hour)
 	promotion := Promo{
 		Name:      "TEST",
 		ExpiredAt: expiredDate,
