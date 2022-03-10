@@ -91,6 +91,11 @@ func NewPromo(promo Promo) Promo {
 }
 
 func (p *Promo) Calculate(shoppingCart ShoppingCart) (rewards []Reward, grandTotal float32, amountOfDeduction float32, err error) {
+	// validation expired
+	if hasExpired(p.ExpiredAt) {
+		err = errors.New("Promotion has expired.")
+		return
+	}
 	for _, schema := range p.Schemas {
 		switch schema.ConditionType {
 		case CONDITION_TYPE_RANGE_PRICE:
@@ -134,6 +139,11 @@ func (p *Promo) Calculate(shoppingCart ShoppingCart) (rewards []Reward, grandTot
 func (p *Promo) CalculateWithCallback(shoppingCart ShoppingCart, callback CallbackFunction) (rewards []Reward, grandTotal float32, amountOfDeduction float32, err error) {
 	err = callback()
 	if err != nil {
+		return
+	}
+	// validation expired
+	if hasExpired(p.ExpiredAt) {
+		err = errors.New("Promotion has expired.")
 		return
 	}
 	for _, schema := range p.Schemas {
@@ -261,4 +271,13 @@ func getReward(amountWillDeduct float32, schema Schema) (rewardAmount float32, r
 	}
 
 	return
+}
+
+func hasExpired(expiredDate time.Time) bool {
+	now := time.Now()
+	diff := now.Sub(expiredDate)
+	if diff.Seconds() > 0 {
+		return true
+	}
+	return false
 }

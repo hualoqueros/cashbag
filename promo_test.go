@@ -13,7 +13,7 @@ func TestPromoTypeDiscountConditionMinPriceWithSubTotalShouldSuccess(t *testing.
 	promotion := Promo{
 		Name:      "TEST",
 		StartAt:   time.Now(),
-		ExpiredAt: time.Now(),
+		ExpiredAt: time.Now().Add(+1 * time.Hour),
 		Schemas: []Schema{
 			Schema{
 				AmountType:     AMOUNT_TYPE_SUBTOTAL,
@@ -48,7 +48,7 @@ func TestPromoTypeDiscountConditionPriceRangeWithSubTotalShouldSuccess(t *testin
 	promotion := Promo{
 		Name:      "TEST",
 		StartAt:   time.Now(),
-		ExpiredAt: time.Now(),
+		ExpiredAt: time.Now().Add(+1 * time.Hour),
 		Schemas: []Schema{
 			Schema{
 				AmountType:     AMOUNT_TYPE_SUBTOTAL,
@@ -96,7 +96,7 @@ func TestPromoTypeDiscountConditionPriceRangeWithSubTotalShouldFailed(t *testing
 	promotion := Promo{
 		Name:      "TEST",
 		StartAt:   time.Now(),
-		ExpiredAt: time.Now(),
+		ExpiredAt: time.Now().Add(+1 * time.Hour),
 		Schemas: []Schema{
 			Schema{
 				AmountType:     AMOUNT_TYPE_SUBTOTAL,
@@ -134,7 +134,7 @@ func TestPromoTypeProductShouldSuccess(t *testing.T) {
 	promotion := Promo{
 		Name:      "TEST",
 		StartAt:   time.Now(),
-		ExpiredAt: time.Now(),
+		ExpiredAt: time.Now().Add(+1 * time.Hour),
 		Schemas: []Schema{
 			Schema{
 				AmountType:     AMOUNT_TYPE_SUBTOTAL,
@@ -202,7 +202,51 @@ func TestPromoTypeDiscountConditionMinPriceWithSubTotalShouldErrorWithCallback(t
 	promotion := Promo{
 		Name:      "TEST",
 		StartAt:   time.Now(),
-		ExpiredAt: time.Now(),
+		ExpiredAt: time.Now().Add(+1 * time.Hour),
+		Schemas: []Schema{
+			Schema{
+				AmountType:     AMOUNT_TYPE_SUBTOTAL,
+				ConditionType:  CONDITION_TYPE_MIN_PRICE,
+				ConditionValue: "11000",
+				RewardType:     REWARD_TYPE_DISCOUNT_AMOUNT,
+				RewardValue:    "3500",
+			},
+		},
+		AdditionalInfo: "123",
+	}
+
+	shoppingCart := ShoppingCart{
+		Carts: []Cart{
+			Cart{
+				AdditionalID: "KFC-123",
+				Price:        500000,
+				Qty:          1,
+			},
+		},
+		Subtotal:   4000,
+		GrandTotal: 5000,
+	}
+	getPromo := NewPromo(promotion)
+	checkingSKUAvailibilty := func() (err error) {
+		for _, cart := range shoppingCart.Carts {
+			skuIsNotAvailable := false
+			if !skuIsNotAvailable {
+				return errors.New(fmt.Sprintf("SKU %+s not available", cart.AdditionalID))
+			}
+		}
+		return nil
+	}
+
+	_, _, _, err := getPromo.CalculateWithCallback(shoppingCart, checkingSKUAvailibilty)
+	assert.NotNil(t, err)
+	assert.Equal(t, "SKU KFC-123 not available", err.Error())
+}
+
+func TestPromoTypeDiscountConditionMinPriceWithSubTotalShouldErrorBecauseExpiredWithCallback(t *testing.T) {
+	expiredDate := time.Now().Add(-48 * time.Hour)
+	promotion := Promo{
+		Name:      "TEST",
+		ExpiredAt: expiredDate,
 		Schemas: []Schema{
 			Schema{
 				AmountType:     AMOUNT_TYPE_SUBTOTAL,
@@ -239,4 +283,5 @@ func TestPromoTypeDiscountConditionMinPriceWithSubTotalShouldErrorWithCallback(t
 
 	_, _, _, err := getPromo.CalculateWithCallback(shoppingCart, checkingSKUAvailibilty)
 	assert.NotNil(t, err)
+	assert.Equal(t, "Promotion has expired.", err.Error())
 }
