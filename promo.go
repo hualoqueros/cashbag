@@ -92,7 +92,9 @@ func NewPromo(promo Promo) Promo {
 
 func (p *Promo) Calculate(shoppingCart ShoppingCart) (rewards []Reward, grandTotal float32, amountOfDeduction float32, err error) {
 	// validation expired
-	if hasExpired(p.ExpiredAt) {
+	t := p.ExpiredAt
+	expiredDate := time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 00, t.Location())
+	if hasExpired(expiredDate) {
 		err = errors.New("Promotion has expired.")
 		return
 	}
