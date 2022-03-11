@@ -187,7 +187,6 @@ func (p *Promo) CalculateWithCallback(shoppingCart ShoppingCart, callback Callba
 	}
 	grandTotal = shoppingCart.GrandTotal - amountOfDeduction
 	if err == nil {
-		object := p.Schemas[0].AmountType
 		condition := p.Schemas[0].ConditionType
 		desc := ""
 		priceWording := ""
@@ -197,12 +196,11 @@ func (p *Promo) CalculateWithCallback(shoppingCart ShoppingCart, callback Callba
 			priceWording = "Range Price is"
 		}
 		if condition == CONDITION_TYPE_MIN_PRICE {
-			desc = strings.ReplaceAll(p.Schemas[0].ConditionValue, "|", " - ")
-			desc = fmt.Sprintf("%s", desc)
-			priceWording = "Minimum Price is"
+			desc = ""
+			priceWording = "You Haven't Reached The Minimum Purchase"
 		}
 
-		err = errors.New(strings.ToLower(fmt.Sprintf("%s %s %s", object, priceWording, desc)))
+		err = errors.New(strings.ToLower(fmt.Sprintf("%s %s", priceWording, desc)))
 	}
 	return
 }
